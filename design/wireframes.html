@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PTIT Chat — Wireframe MVP</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { font-size: 16px; }
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { background: none; border: 0; padding: 0; cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3, p { margin: 0; }
+  .icon {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .sprite { display: none; }
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  :where(a, button, input, textarea):focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .page {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-8) var(--space-8);
+  }
+  .doc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-5);
+  }
+  .doc-brand { display: flex; align-items: center; gap: var(--space-3); }
+  .brand-mark {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    background: linear-gradient(140deg, #4f46e5, #7c3aed);
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.02em;
+    box-shadow: 0 8px 20px rgba(67, 56, 202, 0.32);
+  }
+  .doc-title { font-size: var(--text-lg); font-weight: 600; letter-spacing: var(--tracking-tight); }
+  .doc-sub { font-size: var(--text-xs); color: var(--color-text-muted); }
+  .tabs {
+    display: flex;
+    gap: 3px;
+    padding: 4px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-xs);
+  }
+  .tab {
+    padding: 7px 15px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  }
+  .tab:hover { background: var(--color-surface-hover); color: var(--color-text); }
+  body:not(:has(.screen:target)) .tab[href="#screen-rooms"],
+  body:has(#screen-rooms:target) .tab[href="#screen-rooms"],
+  body:has(#screen-thread:target) .tab[href="#screen-thread"],
+  body:has(#screen-dm:target) .tab[href="#screen-dm"],
+  body:has(#screen-states:target) .tab[href="#screen-states"] {
+    background: var(--color-accent);
+    color: var(--color-accent-contrast);
+    box-shadow: 0 4px 12px rgba(67, 56, 202, 0.28);
+  }
+
+  .stage { overflow-x: auto; padding-bottom: var(--space-2); }
+  .screen { display: none; }
+  .screen:target { display: block; }
+  body:not(:has(.screen:target)) #screen-rooms { display: block; }
+  .screen { animation: screen-in var(--duration-base) var(--ease-out); }
+  @keyframes screen-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .app {
+    display: flex;
+    min-width: 1020px;
+    height: min(800px, calc(100vh - 158px));
+    min-height: 640px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebar {
+    width: var(--sidebar-width);
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+  }
+  .sidebar-head {
+    height: var(--topbar-height);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-3) 0 var(--space-4);
+    border-bottom: 1px solid var(--color-divider);
+  }
+  .workspace { display: flex; align-items: center; gap: var(--space-2-5); min-width: 0; flex: 1; }
+  .ws-logo {
+    width: 34px; height: 34px;
+    flex: none;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: 0 2px 8px rgba(67, 56, 202, 0.35);
+  }
+  .ws-name {
+    font-size: var(--text-md);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: var(--tracking-tight);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ws-sub { font-size: var(--text-2xs); color: var(--color-text-subtle); }
+  .icon-btn {
+    width: 34px; height: 34px;
+    flex: none;
+    display: grid; place-items: center;
+    border-radius: 9px;
+    color: var(--color-text-muted);
+    transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  }
+  .icon-btn:hover { background: var(--color-surface-hover); color: var(--color-text); }
+  .icon-btn:active { background: var(--color-surface-active); }
+  .icon-btn.accent { color: var(--color-accent); }
+
+  .search-wrap { padding: var(--space-3) var(--space-3) var(--space-1-5); }
+  .search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 36px;
+    padding: 0 var(--space-2-5);
+    background: var(--color-surface-sunken);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--color-text-subtle);
+    font-size: var(--text-sm);
+    cursor: text;
+  }
+  .search .icon { width: var(--icon-sm); height: var(--icon-sm); }
+  .search kbd {
+    margin-left: auto;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    line-height: 1;
+    color: var(--color-text-subtle);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-xs);
+    padding: 3px 4px;
+  }
+  .sidebar-scroll {
+    flex: 1;
+    overflow: auto;
+    padding: var(--space-1) var(--space-2-5) var(--space-3);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+  .nav-section { padding-top: var(--space-3); }
+  .nav-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: 0 var(--space-2) var(--space-1-5);
+    color: var(--color-text-subtle);
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wider);
+    text-transform: uppercase;
+  }
+  .mini-btn {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border-radius: var(--radius-xs);
+    color: var(--color-text-subtle);
+  }
+  .mini-btn:hover { background: var(--color-surface-hover); color: var(--color-text); }
+  .mini-btn .icon { width: 14px; height: 14px; }
+  .room {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    height: 36px;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    text-align: left;
+    transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+  }
+  .room:hover { background: var(--color-surface-hover); color: var(--color-text); }
+  .room.active { background: var(--color-accent-soft); color: var(--color-accent-text); font-weight: 600; }
+  .room.active .icon { color: var(--color-accent-text); }
+  .room .icon { width: var(--icon-sm); height: var(--icon-sm); color: var(--color-text-subtle); }
+  .room-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .room.unread .room-name { color: var(--color-text); font-weight: 600; }
+  .badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-full);
+    background: var(--color-unread-bg);
+    color: var(--color-unread-text);
+    font-size: var(--text-2xs);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .badge.mention { background: var(--color-mention-bg); }
+  .badge.muted { background: var(--color-surface-active); color: var(--color-text-muted); }
+
+  .avatar {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    border-radius: 50%;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+  }
+  .avatar-lg { width: var(--avatar-lg); height: var(--avatar-lg); font-size: var(--text-sm); }
+  .avatar-md { width: var(--avatar-md); height: var(--avatar-md); font-size: var(--text-xs); }
+  .avatar-sm { width: var(--avatar-sm); height: var(--avatar-sm); font-size: 10px; }
+  .av-a { background: #e0e7ff; color: #3730a3; }
+  .av-b { background: #dcfce7; color: #166534; }
+  .av-c { background: #fef3c7; color: #92400e; }
+  .av-d { background: #fce7f3; color: #9d174d; }
+  .av-e { background: #e0f2fe; color: #075985; }
+  .av-f { background: #ede9fe; color: #5b21b6; }
+  .presence {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-online);
+    border: 2px solid var(--color-surface);
+  }
+  .avatar-sm .presence { width: 8px; height: 8px; }
+
+  .sidebar-foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5);
+    padding: var(--space-2-5) var(--space-3);
+    border-top: 1px solid var(--color-divider);
+    background: var(--color-surface);
+  }
+  .me { flex: 1; min-width: 0; }
+  .me-name { font-size: var(--text-sm); font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .me-status { display: flex; align-items: center; gap: 5px; font-size: var(--text-2xs); color: var(--color-text-muted); }
+  .dot-online { width: 7px; height: 7px; border-radius: 50%; background: var(--color-online); flex: none; }
+
+  .chat {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+  }
+  .chat-head {
+    flex: none;
+    height: var(--topbar-height);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-5);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .hash {
+    width: 32px; height: 32px;
+    flex: none;
+    display: grid; place-items: center;
+    border-radius: 9px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-text);
+  }
+  .hash .icon { width: var(--icon-md); height: var(--icon-md); }
+  .chat-id { min-width: 0; flex: 1; }
+  .chat-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: var(--tracking-tight);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chat-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1-5);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+  .chat-meta .icon { width: 13px; height: 13px; }
+  .chat-actions { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+  .head-divider { width: 1px; height: 24px; background: var(--color-border); margin: 0 var(--space-1); }
+  .member-stack { display: flex; align-items: center; padding-right: var(--space-1); }
+  .member-stack .avatar { margin-left: -4px; border: 2px solid var(--color-surface); }
+  .member-stack .avatar:first-child { margin-left: 0; }
+  .member-count {
+    margin-left: var(--space-1);
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    color: var(--color-text-muted);
+  }
+
+  .chat-body {
+    flex: 1;
+    overflow: auto;
+    padding: var(--space-4) clamp(16px, 3vw, 32px) var(--space-5);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+  .thread {
+    max-width: var(--thread-max-width);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .day {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: var(--space-2) 0 var(--space-4);
+    color: var(--color-text-subtle);
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wider);
+    text-transform: uppercase;
+  }
+  .day::before, .day::after { content: ""; flex: 1; height: 1px; background: var(--color-border); }
+  .notice {
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1-5);
+    margin: var(--space-1) 0 var(--space-4);
+    padding: 5px 11px;
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    box-shadow: var(--shadow-xs);
+  }
+  .notice .icon { width: 13px; height: 13px; color: var(--color-text-subtle); }
+
+  .msg {
+    display: grid;
+    grid-template-columns: var(--avatar-lg) minmax(0, 1fr);
+    gap: var(--space-2-5);
+    padding-top: var(--space-2-5);
+  }
+  .msg .avatar { margin-top: 1px; }
+  .msg-body { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .msg-meta { display: flex; align-items: baseline; gap: var(--space-2); padding: 0 2px 2px; }
+  .msg-sender { font-size: var(--text-sm); font-weight: 600; color: var(--color-text); }
+  .msg-time { font-size: var(--text-2xs); color: var(--color-text-subtle); font-variant-numeric: tabular-nums; }
+  .bubble {
+    max-width: min(560px, 100%);
+    padding: 8px 12px;
+    background: var(--color-bubble-other-bg);
+    color: var(--color-bubble-other-text);
+    border: 1px solid var(--color-bubble-other-border);
+    border-radius: var(--radius-lg);
+    border-top-left-radius: var(--radius-xs);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    overflow-wrap: anywhere;
+    box-shadow: var(--shadow-xs);
+  }
+  .msg.cont { padding-top: 2px; }
+  .msg.cont .avatar { visibility: hidden; }
+  .msg.cont .msg-meta { display: none; }
+  .msg.cont .bubble { border-top-left-radius: var(--radius-lg); }
+  .bubble + .bubble { margin-top: 2px; }
+  .msg.own { grid-template-columns: minmax(0, 1fr) var(--avatar-lg); }
+  .msg.own .avatar { order: 2; }
+  .msg.own .msg-body { align-items: flex-end; }
+  .msg.own .msg-meta { justify-content: flex-end; }
+  .msg.own .bubble {
+    background: var(--color-bubble-own-bg);
+    color: var(--color-bubble-own-text);
+    border-color: transparent;
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-xs);
+    box-shadow: 0 2px 10px rgba(67, 56, 202, 0.22);
+  }
+  .msg.own.cont .bubble { border-top-right-radius: var(--radius-lg); }
+  .receipt {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px;
+    font-size: var(--text-2xs);
+    color: var(--color-text-subtle);
+  }
+  .receipt .icon { width: 13px; height: 13px; color: var(--color-accent-text); }
+
+  .reactions { display: flex; gap: 4px; padding-top: 4px; }
+  .reaction {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 23px;
+    padding: 0 8px;
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    box-shadow: var(--shadow-xs);
+  }
+  .reaction .icon { width: 12px; height: 12px; }
+  .reaction.on { background: var(--color-accent-soft); border-color: transparent; color: var(--color-accent-text); }
+
+  .attachment {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5);
+    max-width: 340px;
+    margin-top: 4px;
+    padding: 9px 11px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-xs);
+  }
+  .att-icon {
+    width: 36px; height: 36px;
+    flex: none;
+    display: grid; place-items: center;
+    border-radius: var(--radius-sm);
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+  .att-icon .icon { width: var(--icon-md); height: var(--icon-md); }
+  .att-name { font-size: var(--text-sm); font-weight: 600; line-height: 1.3; }
+  .att-sub { font-size: var(--text-2xs); color: var(--color-text-subtle); }
+  .att-download { margin-left: auto; color: var(--color-text-subtle); }
+
+  .typing { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2-5) 0 0 calc(var(--avatar-lg) + var(--space-2-5)); color: var(--color-text-subtle); font-size: var(--text-xs); }
+  .typing-bubble {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+  .typing-bubble span {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--color-text-subtle);
+    animation: typing-blink 1.2s infinite var(--ease-in-out);
+  }
+  .typing-bubble span:nth-child(2) { animation-delay: 0.18s; }
+  .typing-bubble span:nth-child(3) { animation-delay: 0.36s; }
+  @keyframes typing-blink {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-2px); }
+  }
+
+  .composer { flex: none; padding: var(--space-3) clamp(16px, 3vw, 32px) var(--space-4); background: var(--color-bg); }
+  .composer-inner {
+    max-width: var(--composer-max-width);
+    margin: 0 auto;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-composer);
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .composer-inner.is-focused,
+  .composer-inner:focus-within {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-focus);
+  }
+  .composer-input {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    max-height: 140px;
+    padding: 11px 14px 2px;
+    border: 0;
+    background: transparent;
+    font-size: var(--text-base);
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+  }
+  .composer-input::placeholder { color: var(--color-text-subtle); }
+  .composer-bar { display: flex; align-items: center; gap: 2px; padding: 3px 7px 7px; }
+  .composer-bar .icon-btn { width: 30px; height: 30px; }
+  .composer-bar .icon-btn .icon { width: var(--icon-sm); height: var(--icon-sm); }
+  .composer-hint {
+    margin-left: auto;
+    padding-right: var(--space-2);
+    font-size: var(--text-2xs);
+    color: var(--color-text-subtle);
+    white-space: nowrap;
+  }
+  .send {
+    width: 34px; height: 34px;
+    flex: none;
+    display: grid; place-items: center;
+    border-radius: 9px;
+    background: var(--color-accent);
+    color: var(--color-accent-contrast);
+    box-shadow: 0 4px 12px rgba(67, 56, 202, 0.32);
+    transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+  }
+  .send:hover { background: var(--color-accent-hover); }
+  .send:active { background: var(--color-accent-active); transform: scale(0.96); }
+  .send:disabled {
+    background: var(--color-surface-active);
+    color: var(--color-text-subtle);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+  .send .icon { width: 17px; height: 17px; }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: var(--space-5);
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: 13px var(--space-4);
+    border-bottom: 1px solid var(--color-divider);
+  }
+  .card-title { font-size: var(--text-sm); font-weight: 600; }
+  .card-tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--color-text-subtle);
+    background: var(--color-surface-sunken);
+    border-radius: var(--radius-full);
+    padding: 3px 8px;
+  }
+  .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 250px;
+    padding: var(--space-5);
+    background: var(--color-bg);
+  }
+
+  .welcome {
+    max-width: 330px;
+    margin: 0 auto;
+    padding: var(--space-5);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+  }
+  .welcome-logo {
+    width: 44px; height: 44px;
+    margin: 0 auto var(--space-3);
+    display: grid; place-items: center;
+    border-radius: 13px;
+    background: linear-gradient(140deg, #4f46e5, #7c3aed);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 8px 18px rgba(67, 56, 202, 0.3);
+  }
+  .welcome h3 { font-size: var(--text-lg); font-weight: 600; letter-spacing: var(--tracking-tight); }
+  .welcome p { margin-top: 4px; font-size: var(--text-xs); line-height: 1.55; color: var(--color-text-muted); }
+  .field-label { display: block; margin: var(--space-4) 0 5px; text-align: left; font-size: var(--text-2xs); font-weight: 600; color: var(--color-text-muted); }
+  .field {
+    width: 100%;
+    height: 38px;
+    padding: 0 11px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    font-size: var(--text-sm);
+    outline: none;
+  }
+  .field:focus { border-color: var(--color-accent); box-shadow: var(--shadow-focus); }
+  .fine { display: block; margin-top: var(--space-2-5); font-size: 10.5px; color: var(--color-text-subtle); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    transition: background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .btn-primary { background: var(--color-accent); color: var(--color-accent-contrast); box-shadow: 0 4px 12px rgba(67, 56, 202, 0.26); }
+  .btn-primary:hover { background: var(--color-accent-hover); }
+  .btn-ghost { background: var(--color-surface); border: 1px solid var(--color-border-strong); color: var(--color-text); }
+  .btn-ghost:hover { background: var(--color-surface-hover); }
+  .btn-sm { height: 32px; padding: 0 11px; font-size: var(--text-xs); }
+  .welcome .btn { width: 100%; margin-top: var(--space-3); }
+
+  .empty { max-width: 330px; margin: 0 auto; text-align: center; }
+  .empty-icon {
+    width: 48px; height: 48px;
+    margin: 0 auto var(--space-3);
+    display: grid; place-items: center;
+    border-radius: 14px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-text);
+  }
+  .empty-icon .icon { width: 22px; height: 22px; }
+  .empty h3 { font-size: var(--text-md); font-weight: 600; }
+  .empty p { margin: 4px 0 var(--space-4); font-size: var(--text-xs); line-height: 1.6; color: var(--color-text-muted); }
+
+  .skeleton-thread { display: flex; flex-direction: column; gap: var(--space-4); }
+  .sk-row { display: flex; gap: var(--space-2-5); }
+  .sk-row.own { flex-direction: row-reverse; }
+  .sk-avatar { width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--color-surface-active); }
+  .sk-lines { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .sk-row.own .sk-lines { align-items: flex-end; }
+  .sk {
+    height: 12px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(90deg, var(--color-surface-active) 25%, var(--color-surface-hover) 37%, var(--color-surface-active) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.5s infinite linear;
+  }
+  .sk-30 { width: 30%; }
+  .sk-45 { width: 45%; }
+  .sk-60 { width: 60%; }
+  .sk-85 { width: 85%; }
+  .sk-bubble { height: 54px; border-radius: var(--radius-lg); }
+  .sk-loading { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
+  .spinner {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border-strong);
+    border-top-color: var(--color-accent);
+    animation: spin 0.8s infinite linear;
+  }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-box {
+    display: flex;
+    gap: var(--space-3);
+    max-width: 360px;
+    margin: 0 auto;
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-danger);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+  }
+  .error-icon {
+    width: 32px; height: 32px;
+    flex: none;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+  .error-icon .icon { width: var(--icon-md); height: var(--icon-md); }
+  .error-box h3 { font-size: var(--text-sm); font-weight: 600; }
+  .error-box p { margin: 3px 0 var(--space-3); font-size: var(--text-xs); line-height: 1.55; color: var(--color-text-muted); }
+  .btn-row { display: flex; gap: var(--space-2); }
+
+  .demo-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+  .demo-stack .composer-inner { width: 100%; margin: 0; box-shadow: var(--shadow-xs); }
+  .state-legend { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-1); }
+  .state-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    color: var(--color-text-muted);
+  }
+  .state-legend i { width: 8px; height: 8px; border-radius: 50%; background: var(--color-accent); }
+  .state-legend i.gray { background: var(--color-border-strong); }
+
+  .badge-showcase { display: flex; flex-direction: column; gap: var(--space-2); max-width: 340px; margin: 0 auto; }
+  .badge-showcase .room { background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: var(--shadow-xs); }
+  .badge-showcase .room.active { background: var(--color-accent-soft); border-color: transparent; }
+  .badge-legend { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-2); font-size: 10.5px; color: var(--color-text-subtle); }
+
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5);
+    max-width: 360px;
+    margin: 0 auto;
+    padding: var(--space-2-5) var(--space-3);
+    background: var(--color-text);
+    color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+  }
+  .toast-icon {
+    width: 28px; height: 28px;
+    flex: none;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fca5a5;
+  }
+  .toast-icon .icon { width: var(--icon-sm); height: var(--icon-sm); }
+  .toast strong { display: block; font-size: var(--text-xs); font-weight: 600; }
+  .toast small { display: block; font-size: 10.5px; opacity: 0.72; }
+  .toast .btn { margin-left: auto; background: rgba(255, 255, 255, 0.14); color: inherit; }
+  .toast .btn:hover { background: rgba(255, 255, 255, 0.22); }
+
+  .doc-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    margin-top: var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--color-text-subtle);
+  }
+  .doc-foot code { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); }
+  .swatches { display: flex; align-items: center; gap: 5px; }
+  .swatch { width: 16px; height: 16px; border-radius: 5px; border: 1px solid rgba(0, 0, 0, 0.06); }
+
+  @media (max-width: 860px) {
+    .page { padding: var(--space-4) var(--space-4) var(--space-6); }
+    .tabs { width: 100%; overflow-x: auto; justify-content: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></symbol>
+  <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"></path></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></symbol>
+  <symbol id="i-paperclip" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></symbol>
+  <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><path d="M9 9h.01M15 9h.01"></path></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"></circle><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"></circle></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m1 12 4.5 4.5L15 7"></path><path d="m9 11.5 4.5 4.5L23 6.5"></path></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4M12 17h.01"></path></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5M12 15V3"></path></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5"></path><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"></path></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></symbol>
+</svg>
+
+<div class="page">
+  <header class="doc-head">
+    <div class="doc-brand">
+      <div class="brand-mark" aria-hidden="true">P</div>
+      <div>
+        <h1 class="doc-title">PTIT Chat — Wireframe MVP</h1>
+        <p class="doc-sub">3 màn hình lõi + thư viện trạng thái · Desktop-first · Dùng token từ design/tokens.css</p>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Chọn màn hình wireframe">
+      <a class="tab" href="#screen-rooms">Danh sách phòng</a>
+      <a class="tab" href="#screen-thread">Khung chat</a>
+      <a class="tab" href="#screen-dm">Tin nhắn trực tiếp</a>
+      <a class="tab" href="#screen-states">Trạng thái</a>
+    </nav>
+  </header>
+
+  <main class="stage">
+    <section class="screen" id="screen-rooms" aria-label="Màn hình danh sách phòng">
+      <div class="app">
+        <aside class="sidebar">
+          <div class="sidebar-head">
+            <div class="workspace">
+              <div class="ws-logo" aria-hidden="true">P</div>
+              <div style="min-width:0">
+                <div class="ws-name">PTIT Chat</div>
+                <div class="ws-sub">Không gian nội bộ</div>
+              </div>
+            </div>
+            <button class="icon-btn" type="button" aria-label="Tạo phòng mới">
+              <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+            </button>
+          </div>
+          <div class="search-wrap">
+            <div class="search" role="search">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              <span>Tìm phòng hoặc người</span>
+              <kbd>Ctrl K</kbd>
+            </div>
+          </div>
+          <nav class="sidebar-scroll" aria-label="Danh sách phòng và tin nhắn trực tiếp">
+            <div class="nav-section">
+              <div class="nav-head">
+                <span>Kênh</span>
+                <button class="mini-btn" type="button" aria-label="Thêm kênh">
+                  <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+                </button>
+              </div>
+              <button class="room active" type="button" aria-current="true">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">thiết kế</span>
+                <span class="badge">4</span>
+              </button>
+              <button class="room unread" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">kỹ thuật</span>
+                <span class="badge">12</span>
+              </button>
+              <button class="room" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">chung</span>
+              </button>
+              <button class="room unread" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">marketing</span>
+                <span class="badge mention">@</span>
+              </button>
+            </div>
+            <div class="nav-section">
+              <div class="nav-head">
+                <span>Tin nhắn trực tiếp</span>
+                <button class="mini-btn" type="button" aria-label="Tin nhắn mới">
+                  <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+                </button>
+              </div>
+              <button class="room unread" type="button">
+                <span class="avatar avatar-sm av-a">MA<span class="presence"></span></span>
+                <span class="room-name">Minh Anh</span>
+                <span class="badge">2</span>
+              </button>
+              <button class="room" type="button">
+                <span class="avatar avatar-sm av-b">QB<span class="presence"></span></span>
+                <span class="room-name">Quốc Bảo</span>
+              </button>
+              <button class="room" type="button">
+                <span class="avatar avatar-sm av-d">TV</span>
+                <span class="room-name">Thảo Vy</span>
+              </button>
+            </div>
+          </nav>
+          <div class="sidebar-foot">
+            <span class="avatar avatar-md av-f">CN</span>
+            <div class="me">
+              <div class="me-name">Chi Nguyễn</div>
+              <div class="me-status"><span class="dot-online"></span>Trực tuyến</div>
+            </div>
+            <button class="icon-btn" type="button" aria-label="Cài đặt">
+              <svg class="icon" aria-hidden="true"><use href="#i-settings"></use></svg>
+            </button>
+          </div>
+        </aside>
+
+        <section class="chat" aria-label="Kênh thiết kế">
+          <header class="chat-head">
+            <div class="hash" aria-hidden="true">
+              <svg class="icon"><use href="#i-hash"></use></svg>
+            </div>
+            <div class="chat-id">
+              <h2 class="chat-title">thiết kế</h2>
+              <div class="chat-meta">
+                <svg class="icon" aria-hidden="true"><use href="#i-users"></use></svg>
+                8 thành viên · 3 đang hoạt động
+              </div>
+            </div>
+            <div class="member-stack" aria-hidden="true">
+              <span class="avatar avatar-sm av-a">MA</span>
+              <span class="avatar avatar-sm av-b">QB</span>
+              <span class="avatar avatar-sm av-d">TV</span>
+              <span class="member-count">+5</span>
+            </div>
+            <div class="chat-actions">
+              <div class="head-divider" aria-hidden="true"></div>
+              <button class="icon-btn" type="button" aria-label="Tìm trong cuộc trò chuyện">
+                <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              </button>
+              <button class="icon-btn" type="button" aria-label="Thành viên">
+                <svg class="icon" aria-hidden="true"><use href="#i-users"></use></svg>
+              </button>
+              <button class="icon-btn" type="button" aria-label="Tùy chọn khác">
+                <svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="chat-body" role="log" aria-live="polite" aria-label="Tin nhắn trong kênh thiết kế">
+            <div class="thread">
+              <div class="day"><span>Hôm nay</span></div>
+              <div class="notice">
+                <svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg>
+                Bạn đã tham gia kênh #thiết kế
+              </div>
+
+              <article class="msg">
+                <span class="avatar avatar-lg av-a" aria-hidden="true">MA</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Minh Anh</span>
+                    <time class="msg-time" datetime="2026-11-25T09:12">09:12</time>
+                  </div>
+                  <div class="bubble">Chào cả nhà, mình vừa cập nhật wireframe cho luồng nhắn tin. Mọi người xem giúp phần composer nhé.</div>
+                  <div class="bubble">Mình để file trong thư mục design/ rồi.</div>
+                </div>
+              </article>
+
+              <article class="msg cont">
+                <span class="avatar avatar-lg av-a" aria-hidden="true">MA</span>
+                <div class="msg-body">
+                  <div class="bubble">Cần thống nhất chiều cao sidebar trước khi dev, tránh lệch layout giữa các màn.</div>
+                </div>
+              </article>
+
+              <article class="msg">
+                <span class="avatar avatar-lg av-b" aria-hidden="true">QB</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Quốc Bảo</span>
+                    <time class="msg-time" datetime="2026-11-25T09:18">09:18</time>
+                  </div>
+                  <div class="bubble">Phần unread badge nên có cả dạng số và dạng chấm cho kênh ít tin. Mình đã note vào checklist.</div>
+                  <div class="reactions">
+                    <button class="reaction on" type="button">
+                      <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg>
+                      Thích · 2
+                    </button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="msg own">
+                <span class="avatar avatar-lg av-f" aria-hidden="true">CN</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Bạn</span>
+                    <time class="msg-time" datetime="2026-11-25T09:24">09:24</time>
+                  </div>
+                  <div class="bubble">Ok, mình sẽ chốt token rồi gửi spec cho dev trong hôm nay.</div>
+                  <span class="receipt">
+                    <svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>
+                    Đã xem · 09:25
+                  </span>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <footer class="composer">
+            <div class="composer-inner">
+              <label class="sr-only" for="composer-rooms">Nhập tin nhắn cho kênh thiết kế</label>
+              <textarea class="composer-input" id="composer-rooms" rows="1" placeholder="Nhắn gì đó tới #thiết kế"></textarea>
+              <div class="composer-bar">
+                <button class="icon-btn" type="button" aria-label="Đính kèm tệp">
+                  <svg class="icon" aria-hidden="true"><use href="#i-paperclip"></use></svg>
+                </button>
+                <button class="icon-btn" type="button" aria-label="Chọn biểu tượng cảm xúc">
+                  <svg class="icon" aria-hidden="true"><use href="#i-smile"></use></svg>
+                </button>
+                <span class="composer-hint">Enter để gửi · Shift + Enter để xuống dòng</span>
+                <button class="send" type="button" aria-label="Gửi tin nhắn">
+                  <svg class="icon" aria-hidden="true"><use href="#i-send"></use></svg>
+                </button>
+              </div>
+            </div>
+          </footer>
+        </section>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-thread" aria-label="Màn hình khung chat">
+      <div class="app">
+        <aside class="sidebar">
+          <div class="sidebar-head">
+            <div class="workspace">
+              <div class="ws-logo" aria-hidden="true">P</div>
+              <div style="min-width:0">
+                <div class="ws-name">PTIT Chat</div>
+                <div class="ws-sub">Không gian nội bộ</div>
+              </div>
+            </div>
+            <button class="icon-btn" type="button" aria-label="Tạo phòng mới">
+              <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+            </button>
+          </div>
+          <div class="search-wrap">
+            <div class="search" role="search">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              <span>Tìm phòng hoặc người</span>
+              <kbd>Ctrl K</kbd>
+            </div>
+          </div>
+          <nav class="sidebar-scroll" aria-label="Danh sách phòng và tin nhắn trực tiếp">
+            <div class="nav-section">
+              <div class="nav-head">
+                <span>Kênh</span>
+                <button class="mini-btn" type="button" aria-label="Thêm kênh">
+                  <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+                </button>
+              </div>
+              <button class="room" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">thiết kế</span>
+              </button>
+              <button class="room active" type="button" aria-current="true">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">kỹ thuật</span>
+                <span class="badge">12</span>
+              </button>
+              <button class="room" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">chung</span>
+              </button>
+              <button class="room unread" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">marketing</span>
+                <span class="badge mention">@</span>
+              </button>
+            </div>
+            <div class="nav-section">
+              <div class="nav-head">
+                <span>Tin nhắn trực tiếp</span>
+                <button class="mini-btn" type="button" aria-label="Tin nhắn mới">
+                  <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+                </button>
+              </div>
+              <button class="room unread" type="button">
+                <span class="avatar avatar-sm av-a">MA<span class="presence"></span></span>
+                <span class="room-name">Minh Anh</span>
+                <span class="badge">2</span>
+              </button>
+              <button class="room" type="button">
+                <span class="avatar avatar-sm av-b">QB<span class="presence"></span></span>
+                <span class="room-name">Quốc Bảo</span>
+              </button>
+              <button class="room" type="button">
+                <span class="avatar avatar-sm av-d">TV</span>
+                <span class="room-name">Thảo Vy</span>
+              </button>
+            </div>
+          </nav>
+          <div class="sidebar-foot">
+            <span class="avatar avatar-md av-f">CN</span>
+            <div class="me">
+              <div class="me-name">Chi Nguyễn</div>
+              <div class="me-status"><span class="dot-online"></span>Trực tuyến</div>
+            </div>
+            <button class="icon-btn" type="button" aria-label="Cài đặt">
+              <svg class="icon" aria-hidden="true"><use href="#i-settings"></use></svg>
+            </button>
+          </div>
+        </aside>
+
+        <section class="chat" aria-label="Kênh kỹ thuật">
+          <header class="chat-head">
+            <div class="hash" aria-hidden="true">
+              <svg class="icon"><use href="#i-hash"></use></svg>
+            </div>
+            <div class="chat-id">
+              <h2 class="chat-title">kỹ thuật</h2>
+              <div class="chat-meta">
+                <svg class="icon" aria-hidden="true"><use href="#i-users"></use></svg>
+                12 thành viên · 5 đang hoạt động
+              </div>
+            </div>
+            <div class="member-stack" aria-hidden="true">
+              <span class="avatar avatar-sm av-a">MA</span>
+              <span class="avatar avatar-sm av-b">QB</span>
+              <span class="avatar avatar-sm av-d">TV</span>
+              <span class="avatar avatar-sm av-c">HL</span>
+              <span class="member-count">+8</span>
+            </div>
+            <div class="chat-actions">
+              <div class="head-divider" aria-hidden="true"></div>
+              <button class="icon-btn" type="button" aria-label="Tìm trong cuộc trò chuyện">
+                <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              </button>
+              <button class="icon-btn" type="button" aria-label="Tin nhắn đã ghim">
+                <svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg>
+              </button>
+              <button class="icon-btn" type="button" aria-label="Tùy chọn khác">
+                <svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="chat-body" role="log" aria-live="polite" aria-label="Tin nhắn trong kênh kỹ thuật">
+            <div class="thread">
+              <div class="day"><span>Hôm nay</span></div>
+              <div class="notice">
+                <svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg>
+                Quốc Bảo đã ghim một tin nhắn trong kênh này
+              </div>
+
+              <article class="msg">
+                <span class="avatar avatar-lg av-a" aria-hidden="true">MA</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Minh Anh</span>
+                    <time class="msg-time" datetime="2026-11-25T10:02">10:02</time>
+                  </div>
+                  <div class="bubble">Bản build realtime đã lên staging, độ trễ khoảng 300ms.</div>
+                  <div class="bubble">Ai test giúp luồng gửi tin khi mất mạng với nhé.</div>
+                </div>
+              </article>
+
+              <article class="msg">
+                <span class="avatar avatar-lg av-b" aria-hidden="true">QB</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Quốc Bảo</span>
+                    <time class="msg-time" datetime="2026-11-25T10:05">10:05</time>
+                  </div>
+                  <div class="bubble">Mình gửi checklist realtime để cả nhóm đối chiếu trạng thái.</div>
+                  <div class="attachment">
+                    <span class="att-icon" aria-hidden="true">
+                      <svg class="icon"><use href="#i-file"></use></svg>
+                    </span>
+                    <div>
+                      <div class="att-name">checklist-realtime.md</div>
+                      <div class="att-sub">Markdown · 12 KB</div>
+                    </div>
+                    <button class="icon-btn att-download" type="button" aria-label="Tải checklist-realtime.md">
+                      <svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+
+              <article class="msg own">
+                <span class="avatar avatar-lg av-f" aria-hidden="true">CN</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Bạn</span>
+                    <time class="msg-time" datetime="2026-11-25T10:07">10:07</time>
+                  </div>
+                  <div class="bubble">Mình vừa thử. Tin nhắn giữ trạng thái "Đang gửi" và retry được sau 5 giây.</div>
+                  <div class="bubble">Nhưng cần thêm toast khi gửi thất bại, hiện tại chỉ đổi icon.</div>
+                </div>
+              </article>
+
+              <article class="msg">
+                <span class="avatar avatar-lg av-d" aria-hidden="true">TV</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Thảo Vy</span>
+                    <time class="msg-time" datetime="2026-11-25T10:11">10:11</time>
+                  </div>
+                  <div class="bubble">Đã ghi nhận, mình bổ sung state lỗi và trạng thái gửi lại vào checklist QA.</div>
+                  <div class="reactions">
+                    <button class="reaction on" type="button">
+                      <svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg>
+                      Thích · 3
+                    </button>
+                    <button class="reaction" type="button">
+                      <svg class="icon" aria-hidden="true"><use href="#i-smile"></use></svg>
+                      1
+                    </button>
+                  </div>
+                </div>
+              </article>
+
+              <div class="typing">
+                <span class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></span>
+                Minh Anh đang nhập…
+              </div>
+            </div>
+          </div>
+
+          <footer class="composer">
+            <div class="composer-inner">
+              <label class="sr-only" for="composer-thread">Nhập tin nhắn cho kênh kỹ thuật</label>
+              <textarea class="composer-input" id="composer-thread" rows="1" placeholder="Nhắn gì đó tới #kỹ thuật"></textarea>
+              <div class="composer-bar">
+                <button class="icon-btn" type="button" aria-label="Đính kèm tệp">
+                  <svg class="icon" aria-hidden="true"><use href="#i-paperclip"></use></svg>
+                </button>
+                <button class="icon-btn" type="button" aria-label="Chọn biểu tượng cảm xúc">
+                  <svg class="icon" aria-hidden="true"><use href="#i-smile"></use></svg>
+                </button>
+                <span class="composer-hint">Enter để gửi · Shift + Enter để xuống dòng</span>
+                <button class="send" type="button" aria-label="Gửi tin nhắn">
+                  <svg class="icon" aria-hidden="true"><use href="#i-send"></use></svg>
+                </button>
+              </div>
+            </div>
+          </footer>
+        </section>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-dm" aria-label="Màn hình tin nhắn trực tiếp">
+      <div class="app">
+        <aside class="sidebar">
+          <div class="sidebar-head">
+            <div class="workspace">
+              <div class="ws-logo" aria-hidden="true">P</div>
+              <div style="min-width:0">
+                <div class="ws-name">PTIT Chat</div>
+                <div class="ws-sub">Không gian nội bộ</div>
+              </div>
+            </div>
+            <button class="icon-btn" type="button" aria-label="Tạo phòng mới">
+              <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+            </button>
+          </div>
+          <div class="search-wrap">
+            <div class="search" role="search">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              <span>Tìm phòng hoặc người</span>
+              <kbd>Ctrl K</kbd>
+            </div>
+          </div>
+          <nav class="sidebar-scroll" aria-label="Danh sách phòng và tin nhắn trực tiếp">
+            <div class="nav-section">
+              <div class="nav-head">
+                <span>Kênh</span>
+                <button class="mini-btn" type="button" aria-label="Thêm kênh">
+                  <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+                </button>
+              </div>
+              <button class="room" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">thiết kế</span>
+              </button>
+              <button class="room" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">kỹ thuật</span>
+              </button>
+              <button class="room" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">chung</span>
+              </button>
+              <button class="room unread" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                <span class="room-name">marketing</span>
+                <span class="badge mention">@</span>
+              </button>
+            </div>
+            <div class="nav-section">
+              <div class="nav-head">
+                <span>Tin nhắn trực tiếp</span>
+                <button class="mini-btn" type="button" aria-label="Tin nhắn mới">
+                  <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+                </button>
+              </div>
+              <button class="room active" type="button" aria-current="true">
+                <span class="avatar avatar-sm av-a">MA<span class="presence"></span></span>
+                <span class="room-name">Minh Anh</span>
+              </button>
+              <button class="room" type="button">
+                <span class="avatar avatar-sm av-b">QB<span class="presence"></span></span>
+                <span class="room-name">Quốc Bảo</span>
+              </button>
+              <button class="room" type="button">
+                <span class="avatar avatar-sm av-d">TV</span>
+                <span class="room-name">Thảo Vy</span>
+              </button>
+            </div>
+          </nav>
+          <div class="sidebar-foot">
+            <span class="avatar avatar-md av-f">CN</span>
+            <div class="me">
+              <div class="me-name">Chi Nguyễn</div>
+              <div class="me-status"><span class="dot-online"></span>Trực tuyến</div>
+            </div>
+            <button class="icon-btn" type="button" aria-label="Cài đặt">
+              <svg class="icon" aria-hidden="true"><use href="#i-settings"></use></svg>
+            </button>
+          </div>
+        </aside>
+
+        <section class="chat" aria-label="Tin nhắn trực tiếp với Minh Anh">
+          <header class="chat-head">
+            <span class="avatar avatar-lg av-a" aria-hidden="true">MA<span class="presence"></span></span>
+            <div class="chat-id">
+              <h2 class="chat-title">Minh Anh</h2>
+              <div class="chat-meta"><span class="dot-online"></span>Đang hoạt động</div>
+            </div>
+            <div class="chat-actions">
+              <button class="icon-btn" type="button" aria-label="Tìm trong cuộc trò chuyện">
+                <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              </button>
+              <button class="icon-btn" type="button" aria-label="Tùy chọn khác">
+                <svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="chat-body" role="log" aria-live="polite" aria-label="Tin nhắn với Minh Anh">
+            <div class="thread">
+              <div class="day"><span>Hôm nay</span></div>
+
+              <article class="msg">
+                <span class="avatar avatar-lg av-a" aria-hidden="true">MA</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Minh Anh</span>
+                    <time class="msg-time" datetime="2026-11-25T10:31">10:31</time>
+                  </div>
+                  <div class="bubble">Bạn rảnh xem lại luồng tạo phòng không? Mình thấy bước đặt tên đang hơi mơ hồ.</div>
+                </div>
+              </article>
+
+              <article class="msg own">
+                <span class="avatar avatar-lg av-f" aria-hidden="true">CN</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Bạn</span>
+                    <time class="msg-time" datetime="2026-11-25T10:34">10:34</time>
+                  </div>
+                  <div class="bubble">Rảnh, mình đang mở wireframe đây.</div>
+                  <div class="bubble">Có gì cần chỉnh ở bước đặt tên phòng?</div>
+                </div>
+              </article>
+
+              <article class="msg">
+                <span class="avatar avatar-lg av-a" aria-hidden="true">MA</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Minh Anh</span>
+                    <time class="msg-time" datetime="2026-11-25T10:36">10:36</time>
+                  </div>
+                  <div class="bubble">Tên phòng nên giới hạn 40 ký tự, báo lỗi ngay dưới ô nhập và chặn nút Tạo khi trùng tên.</div>
+                </div>
+              </article>
+
+              <article class="msg own">
+                <span class="avatar avatar-lg av-f" aria-hidden="true">CN</span>
+                <div class="msg-body">
+                  <div class="msg-meta">
+                    <span class="msg-sender">Bạn</span>
+                    <time class="msg-time" datetime="2026-11-25T10:40">10:40</time>
+                  </div>
+                  <div class="bubble">Ok, mình thêm state lỗi và bộ đếm ký tự vào spec. Chiều nay gửi bạn review.</div>
+                  <span class="receipt">
+                    <svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>
+                    Đã xem · 10:42
+                  </span>
+                </div>
+              </article>
+
+              <div class="typing">
+                <span class="typing-bubble" aria-hidden="true"><span></span><span></span><span></span></span>
+                Minh Anh đang nhập…
+              </div>
+            </div>
+          </div>
+
+          <footer class="composer">
+            <div class="composer-inner is-focused">
+              <label class="sr-only" for="composer-dm">Nhập tin nhắn cho Minh Anh</label>
+              <textarea class="composer-input" id="composer-dm" rows="1" placeholder="Nhắn cho Minh Anh"></textarea>
+              <div class="composer-bar">
+                <button class="icon-btn" type="button" aria-label="Đính kèm tệp">
+                  <svg class="icon" aria-hidden="true"><use href="#i-paperclip"></use></svg>
+                </button>
+                <button class="icon-btn" type="button" aria-label="Chọn biểu tượng cảm xúc">
+                  <svg class="icon" aria-hidden="true"><use href="#i-smile"></use></svg>
+                </button>
+                <span class="composer-hint">Enter để gửi · Shift + Enter để xuống dòng</span>
+                <button class="send" type="button" aria-label="Gửi tin nhắn" disabled>
+                  <svg class="icon" aria-hidden="true"><use href="#i-send"></use></svg>
+                </button>
+              </div>
+            </div>
+          </footer>
+        </section>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-states" aria-label="Thư viện trạng thái giao diện">
+      <div class="gallery">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Chọn tên hiển thị</span>
+            <span class="card-tag">First run</span>
+          </div>
+          <div class="card-body">
+            <div class="welcome">
+              <div class="welcome-logo" aria-hidden="true">P</div>
+              <h3>Chào mừng đến PTIT Chat</h3>
+              <p>Chọn tên hiển thị để bắt đầu. Không cần đăng nhập, dữ liệu chỉ lưu trên máy bạn.</p>
+              <label class="field-label" for="display-name">Tên hiển thị</label>
+              <input class="field" id="display-name" value="Chi Nguyễn" autocomplete="nickname">
+              <button class="btn btn-primary" type="button">Vào không gian làm việc</button>
+              <span class="fine">Bạn có thể đổi tên sau trong phần cài đặt.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Phòng trống</span>
+            <span class="card-tag">Empty</span>
+          </div>
+          <div class="card-body">
+            <div class="empty">
+              <div class="empty-icon" aria-hidden="true">
+                <svg class="icon"><use href="#i-chat"></use></svg>
+              </div>
+              <h3>Chưa có tin nhắn</h3>
+              <p>Đây là khởi đầu của #marketing. Gửi lời chào đầu tiên để mở màn cuộc trò chuyện.</p>
+              <button class="btn btn-primary" type="button">Gửi tin nhắn</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Đang tải</span>
+            <span class="card-tag">Loading</span>
+          </div>
+          <div class="card-body">
+            <div class="skeleton-thread" aria-busy="true" aria-label="Đang tải tin nhắn">
+              <div class="sk-row">
+                <span class="sk-avatar"></span>
+                <div class="sk-lines">
+                  <span class="sk sk-30"></span>
+                  <span class="sk sk-bubble"></span>
+                  <span class="sk sk-45"></span>
+                </div>
+              </div>
+              <div class="sk-row own">
+                <span class="sk-avatar"></span>
+                <div class="sk-lines">
+                  <span class="sk sk-45"></span>
+                  <span class="sk sk-bubble" style="width: 70%"></span>
+                </div>
+              </div>
+              <div class="sk-loading"><span class="spinner" aria-hidden="true"></span>Đang tải tin nhắn…</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Lỗi tải dữ liệu</span>
+            <span class="card-tag">Error</span>
+          </div>
+          <div class="card-body">
+            <div class="error-box" role="alert">
+              <span class="error-icon" aria-hidden="true">
+                <svg class="icon"><use href="#i-alert"></use></svg>
+              </span>
+              <div>
+                <h3>Không tải được tin nhắn</h3>
+                <p>Kết nối bị gián đoạn. Tin nhắn bạn đã gửi vẫn được giữ và sẽ gửi lại khi có mạng.</p>
+                <div class="btn-row">
+                  <button class="btn btn-primary btn-sm" type="button">Thử lại</button>
+                  <button class="btn btn-ghost btn-sm" type="button">Xem chi tiết</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Composer — focus &amp; disabled</span>
+            <span class="card-tag">Input</span>
+          </div>
+          <div class="card-body">
+            <div class="demo-stack">
+              <div class="composer-inner is-focused">
+                <label class="sr-only" for="demo-composer">Composer mẫu</label>
+                <textarea class="composer-input" id="demo-composer" rows="2">Mình đang kiểm tra state lỗi, sẽ cập nhật spec trước 15:00.</textarea>
+                <div class="composer-bar">
+                  <button class="icon-btn" type="button" aria-label="Đính kèm tệp">
+                    <svg class="icon" aria-hidden="true"><use href="#i-paperclip"></use></svg>
+                  </button>
+                  <button class="icon-btn" type="button" aria-label="Chọn biểu tượng cảm xúc">
+                    <svg class="icon" aria-hidden="true"><use href="#i-smile"></use></svg>
+                  </button>
+                  <span class="composer-hint">Enter để gửi</span>
+                  <button class="send" type="button" aria-label="Gửi tin nhắn">
+                    <svg class="icon" aria-hidden="true"><use href="#i-send"></use></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="composer-inner">
+                <label class="sr-only" for="demo-composer-empty">Composer trống</label>
+                <textarea class="composer-input" id="demo-composer-empty" rows="1" placeholder="Nhắn gì đó…"></textarea>
+                <div class="composer-bar">
+                  <button class="icon-btn" type="button" aria-label="Đính kèm tệp">
+                    <svg class="icon" aria-hidden="true"><use href="#i-paperclip"></use></svg>
+                  </button>
+                  <span class="composer-hint">Nút gửi tắt khi ô nhập trống</span>
+                  <button class="send" type="button" aria-label="Gửi tin nhắn" disabled>
+                    <svg class="icon" aria-hidden="true"><use href="#i-send"></use></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="state-legend">
+                <span><i></i>Focus ring 2px</span>
+                <span><i class="gray"></i>Disabled / empty</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Unread &amp; toast lỗi gửi</span>
+            <span class="card-tag">Feedback</span>
+          </div>
+          <div class="card-body">
+            <div class="demo-stack">
+              <div class="badge-showcase">
+                <button class="room active" type="button" aria-current="true">
+                  <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                  <span class="room-name">thiết kế</span>
+                  <span class="badge">4</span>
+                </button>
+                <button class="room unread" type="button">
+                  <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                  <span class="room-name">kỹ thuật</span>
+                  <span class="badge">12</span>
+                </button>
+                <button class="room unread" type="button">
+                  <span class="avatar avatar-sm av-a">MA</span>
+                  <span class="room-name">Minh Anh</span>
+                  <span class="badge mention">@</span>
+                </button>
+                <button class="room" type="button">
+                  <svg class="icon" aria-hidden="true"><use href="#i-hash"></use></svg>
+                  <span class="room-name">chung</span>
+                  <span class="badge muted">3</span>
+                </button>
+                <div class="badge-legend">
+                  <span>Số đếm = tin chưa đọc</span>
+                  <span>@ = có nhắc tên</span>
+                </div>
+              </div>
+              <div class="toast" role="alert">
+                <span class="toast-icon" aria-hidden="true">
+                  <svg class="icon"><use href="#i-alert"></use></svg>
+                </span>
+                <div>
+                  <strong>Gửi tin thất bại</strong>
+                  <small>Kiểm tra kết nối và thử lại.</small>
+                </div>
+                <button class="btn btn-sm" type="button">Thử lại</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="doc-foot" style="margin-top: var(--space-5)">
+        <span>Thư viện trạng thái bổ trợ cho 3 màn hình lõi, dùng cho visual QA.</span>
+        <span>Tokens: <code>--color-*</code>, <code>--space-*</code>, <code>--text-*</code>, <code>--radius-*</code></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="doc-foot">
+    <span>Mở trực tiếp bằng trình duyệt · Không phụ thuộc mạng hay thư viện ngoài · Màn hình tham chiếu cho desktop ≥ 1024px</span>
+    <span class="swatches" aria-hidden="true">
+      <span class="swatch" style="background: var(--color-bg)"></span>
+      <span class="swatch" style="background: var(--color-surface)"></span>
+      <span class="swatch" style="background: var(--color-accent)"></span>
+      <span class="swatch" style="background: var(--color-bubble-own-bg)"></span>
+      <span class="swatch" style="background: var(--color-success)"></span>
+      <span class="swatch" style="background: var(--color-danger)"></span>
+    </span>
+  </footer>
+</div>
+</body>
+</html>
+
