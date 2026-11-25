@@ -102,8 +102,8 @@ export default function App() {
   const sidebarRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const chatRef = useRef<HTMLElement>(null);
-  const savedFocusRef = useRef<HTMLElement | null>(null);
   const lastOpenedKeyRef = useRef<string | null>(null);
+  const focusedConversationKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     activeRef.current = active;
@@ -148,14 +148,27 @@ export default function App() {
     (chat as HTMLElement & { inert: boolean }).inert = overlay;
     if (overlay) chat.setAttribute("aria-hidden", "true");
     else chat.removeAttribute("aria-hidden");
+    return () => {
+      (chat as HTMLElement & { inert: boolean }).inert = false;
+      chat.removeAttribute("aria-hidden");
+    };
   }, [layout, drawerOpen, active]);
+
+  useEffect(() => {
+    if (!me || !active) return;
+    const key = conversationKeyFor(active);
+    if (focusedConversationKeyRef.current === key) return;
+    focusedConversationKeyRef.current = key;
+    if (layout !== "desktop") return;
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLTextAreaElement>(".composer textarea")?.focus();
+    });
+  }, [active, me, layout]);
 
   useEffect(() => {
     if (!drawerOpen || layout !== "tablet") return;
     const sidebar = sidebarRef.current;
     if (!sidebar) return;
-    savedFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     function focusables(): HTMLElement[] {
       return Array.from(
@@ -191,8 +204,7 @@ export default function App() {
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      const target = savedFocusRef.current ?? menuButtonRef.current;
-      target?.focus();
+      requestAnimationFrame(() => menuButtonRef.current?.focus());
     };
   }, [drawerOpen, layout]);
 
@@ -603,6 +615,7 @@ export default function App() {
         unread={unread}
         theme={theme}
         isDrawerOverlay={layout === "tablet"}
+        drawerOpen={drawerOpen}
         sidebarRef={sidebarRef}
         onSelectRoom={handleSelectRoom}
         onSelectDm={handleSelectDm}

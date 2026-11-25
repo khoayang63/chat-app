@@ -20,6 +20,7 @@ interface Props {
   unread: UnreadMap;
   theme: Theme;
   isDrawerOverlay: boolean;
+  drawerOpen: boolean;
   sidebarRef: RefObject<HTMLElement>;
   onSelectRoom: (room: Room) => void;
   onSelectDm: (peer: DmPeer) => void;
@@ -68,6 +69,7 @@ export function Sidebar({
   unread,
   theme,
   isDrawerOverlay,
+  drawerOpen,
   sidebarRef,
   onSelectRoom,
   onSelectDm,
@@ -136,17 +138,23 @@ export function Sidebar({
     }
   }
 
-  const drawerProps = isDrawerOverlay
+  const drawerActive = isDrawerOverlay && drawerOpen;
+  const drawerProps = drawerActive
     ? {
         role: "dialog" as const,
         "aria-modal": true,
         "aria-label": "Danh sách hội thoại",
       }
     : {};
+  const drawerHidden = isDrawerOverlay && !drawerOpen;
 
   return (
     <aside id="sidebar" className="sidebar" ref={sidebarRef} aria-label="Danh sách hội thoại">
-      <div className="sidebar-inner" {...drawerProps}>
+      <div
+        className="sidebar-inner"
+        {...drawerProps}
+        aria-hidden={drawerHidden ? true : undefined}
+      >
       <div className="sidebar-brand">
         <span className="brand-mark sm">P</span>
         <div>

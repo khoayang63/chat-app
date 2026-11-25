@@ -217,7 +217,7 @@ p {
   border: none;
   background: none;
   padding: 0;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -454,7 +454,7 @@ p {
   font-variant-numeric: tabular-nums;
 }
 
-.unread-badge.mention {
+.unread-badge[data-kind="mention"] {
   background: var(--color-mention-bg);
   color: var(--color-mention-text);
 }
@@ -556,6 +556,9 @@ p {
 .identity-hint {
   font-size: 11px;
   color: var(--color-text-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ---------- Avatars ---------- */
@@ -738,7 +741,9 @@ p {
 .messages {
   flex: 1 1 auto;
   min-height: 0;
-  max-width: 100%;
+  width: 100%;
+  max-width: var(--thread-max-width);
+  margin-inline: auto;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 20px 22px 8px;
@@ -869,7 +874,9 @@ p {
 
 .composer-wrap {
   flex: none;
-  max-width: 100%;
+  width: 100%;
+  max-width: var(--thread-max-width);
+  margin-inline: auto;
   padding: 10px 22px 14px;
   border-top: 1px solid var(--color-border);
   background: var(--color-bg);
@@ -982,6 +989,13 @@ p {
 :focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
+}
+
+#conversation-heading:focus {
+  outline: none;
+  border-radius: 6px;
+  background: var(--color-surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
 }
 
 /* ---------- Responsive ---------- */
