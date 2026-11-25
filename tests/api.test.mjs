@@ -15,9 +15,10 @@ import {
 
 // Values are asserted as literals on purpose: the suite encodes the documented
 // contract (README + design spec) and must fail if the backend silently drifts.
-const MAX_MESSAGE_LENGTH = 2000;
-const MAX_NAME_LENGTH = 40;
-const MAX_ROOM_NAME_LENGTH = 30;
+const MAX_MESSAGE_LENGTH = 4000;
+const MIN_NAME_LENGTH = 2;
+const MAX_NAME_LENGTH = 32;
+const MAX_ROOM_NAME_LENGTH = 40;
 
 let server;
 
@@ -70,10 +71,23 @@ test("bootstrap: /api/me rejects missing, empty, control and oversized names", a
   assert.equal(missing.status, 400);
   assert.ok(missing.body.error);
 
-  for (const raw of ["", "   ", "bad\u0001name", "n".repeat(MAX_NAME_LENGTH + 1)]) {
+  for (const raw of [
+    "",
+    "   ",
+    "a",
+    "bad\u0001name",
+    "n".repeat(MAX_NAME_LENGTH + 1),
+  ]) {
     const res = await requestJson(server.base, `/api/me?name=${encodeURIComponent(raw)}`);
     assert.equal(res.status, 400, `name ${JSON.stringify(raw)} must be rejected`);
   }
+
+  const atMinimum = await requestJson(
+    server.base,
+    `/api/me?name=${encodeURIComponent("ab".slice(0, MIN_NAME_LENGTH))}`,
+  );
+  assert.equal(atMinimum.status, 200, "a name at the minimum length is accepted");
+  assert.equal(atMinimum.body.name.length, MIN_NAME_LENGTH);
 
   const atLimit = await requestJson(
     server.base,
@@ -91,7 +105,7 @@ test("rooms: creation normalizes names and rejects duplicates", async () => {
 
   const duplicate = await postJson(server.base, "/api/rooms", { name: "QA ROOM JS" });
   assert.equal(duplicate.status, 409);
-  assert.match(duplicate.body.error, /already exists/i);
+  assert.match(duplicate.body.error, /đã tồn tại/i);
 
   const withHashDuplicate = await postJson(server.base, "/api/rooms", { name: "#qa-room-js" });
   assert.equal(withHashDuplicate.status, 409);
@@ -101,7 +115,15 @@ test("rooms: creation normalizes names and rejects duplicates", async () => {
 });
 
 test("rooms: creation validates malformed and oversized names", async () => {
-  const invalidNames = ["", "   ", "#", "!!", "hello world!", "a".repeat(MAX_ROOM_NAME_LENGTH + 1)];
+  const invalidNames = [
+    "",
+    "   ",
+    "#",
+    "a",
+    "!!",
+    "hello world!",
+    "a".repeat(MAX_ROOM_NAME_LENGTH + 1),
+  ];
   for (const name of invalidNames) {
     const res = await postJson(server.base, "/api/rooms", { name });
     assert.equal(res.status, 400, `room name ${JSON.stringify(name)} must be rejected`);

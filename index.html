@@ -1,9 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PTIT Messaging</title>
+    <meta name="color-scheme" content="light dark" />
+    <title>PTIT Chat</title>
+    <style>
+      html {
+        background: #f4f5f8;
+      }
+      html[data-theme="dark"] {
+        background: #0e1116;
+      }
+    </style>
+    <script>
+      try {
+        var t = localStorage.getItem("ptit.theme");
+        document.documentElement.dataset.theme = t === "dark" ? "dark" : "light";
+      } catch (e) {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

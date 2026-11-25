@@ -159,6 +159,55 @@ test("realtime: DM isolation between two conversation pairs", async () => {
   }
 });
 
+test("realtime: message_activity reaches clients outside the conversation without a body", async () => {
+  const general = await seededRoom(server.base, "general");
+  const random = await seededRoom(server.base, "random");
+  const bob = await createUser(server.base, "Activity Bob");
+
+  const watcher = await connectSocket(server.base);
+  const sender = await connectSocket(server.base);
+  try {
+    await joinChannel(watcher, { roomId: general.id });
+    await joinChannel(sender, { roomId: random.id });
+
+    const activityPromise = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        watcher.off("message_activity", onActivity);
+        reject(new Error("timed out waiting for message_activity"));
+      }, 3000);
+      function onActivity(activity) {
+        if (activity.roomId !== random.id) return;
+        clearTimeout(timer);
+        watcher.off("message_activity", onActivity);
+        resolve(activity);
+      }
+      watcher.on("message_activity", onActivity);
+    });
+
+    const ack = await emitAck(sender, "send_message", {
+      roomId: random.id,
+      senderId: bob.id,
+      senderName: bob.name,
+      body: "@Activity Bob ping",
+    });
+    assert.equal(ack.ok, true);
+
+    const activity = await activityPromise;
+    assert.equal(activity.id, ack.message.id);
+    assert.equal(activity.roomId, random.id);
+    assert.equal(activity.senderId, bob.id);
+    assert.ok(activity.mentions.includes(bob.id), "server computed mention user ids");
+    assert.equal("body" in activity, false, "activity must not leak the message body");
+    assert.equal(activity.body, undefined);
+
+    const noMessage = expectNoNewMessage(watcher, 300);
+    await noMessage;
+  } finally {
+    await closeSocket(watcher);
+    await closeSocket(sender);
+  }
+});
+
 test("realtime: validation acks for empty, oversized and malformed messages", async () => {
   const general = await seededRoom(server.base, "general");
   const alice = await createUser(server.base, "Validation Alice");
@@ -171,22 +220,41 @@ test("realtime: validation acks for empty, oversized and malformed messages", as
     for (const body of ["", "   ", "\n\t  "]) {
       const ack = await emitAck(socket, "send_message", { ...base, body });
       assert.equal(ack.ok, false, `empty body ${JSON.stringify(body)} must be rejected`);
-      assert.match(ack.error, /empty/i);
+      assert.match(ack.error, /trống/i);
     }
 
     const oversized = await emitAck(socket, "send_message", {
       ...base,
-      body: "x".repeat(2001),
+      body: "x".repeat(4001),
     });
     assert.equal(oversized.ok, false);
-    assert.match(oversized.error, /2000/);
+    assert.match(oversized.error, /4\.000/);
 
     const atLimit = await emitAck(socket, "send_message", {
       ...base,
-      body: "y".repeat(2000),
+      body: "y".repeat(4000),
     });
-    assert.equal(atLimit.ok, true, "exactly 2000 characters must be accepted");
-    assert.equal(atLimit.message.body.length, 2000);
+    assert.equal(atLimit.ok, true, "exactly 4000 characters must be accepted");
+    assert.equal(atLimit.message.body.length, 4000);
+
+    const emojiAtLimit = await emitAck(socket, "send_message", {
+      ...base,
+      body: "😀".repeat(4000),
+    });
+    assert.equal(emojiAtLimit.ok, true, "4000 emoji code points must be accepted");
+    assert.equal(Array.from(emojiAtLimit.message.body).length, 4000);
+    assert.equal(
+      emojiAtLimit.message.body.length,
+      8000,
+      "the UTF-16 length is larger than the code-point limit",
+    );
+
+    const emojiOver = await emitAck(socket, "send_message", {
+      ...base,
+      body: "😀".repeat(4001),
+    });
+    assert.equal(emojiOver.ok, false, "4001 emoji code points must be rejected");
+    assert.match(emojiOver.error, /4\.000/);
 
     const unknownSender = await emitAck(socket, "send_message", {
       ...base,

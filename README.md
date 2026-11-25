@@ -59,14 +59,14 @@ DB_PATH=./data/ptit.db
 
 ## Features
 
-1. **Identity** – display-name entry stored in `localStorage`; no passwords or real auth (explicitly out of scope for this MVP).
+1. **Identity** – display-name entry stored in `localStorage` (2–32 characters); no passwords or real auth (explicitly out of scope for this MVP).
 2. **Rooms** – seeded default channels plus room creation; anyone can join any room.
 3. **Direct messages** – start a DM with any user from the users list; DM threads persist in the sidebar.
 4. **Realtime messaging** – messages persist to SQLite, then broadcast over Socket.IO to everyone in the room/DM. Opening a conversation loads the latest 50 messages in order.
-5. **Validation** – non-empty bodies, max 2000 characters, room-name rules, and friendly error responses/acks.
-6. **UI** – sidebar with rooms and DMs, chat bubbles with timestamps, Enter to send / Shift+Enter for newline, auto-scroll, sends acknowledged by the server, and a connection status pill.
+5. **Validation** – non-empty bodies, max 4000 characters (counter shown from 3600), room-name rules, and friendly error responses/acks.
+6. **UI** – responsive layout (two panes, tablet drawer, single-pane mobile), sidebar search (`Ctrl/Cmd+K`), unread and mention badges, Vietnamese copy, light/dark theme persisted in `localStorage`, accessible `role="log"` thread with `<time datetime>`, chat bubbles with timestamps, Enter to send / Shift+Enter for newline, auto-scroll, sends acknowledged by the server, and a connection status pill.
 
-No `design/tokens.css` or `design/wireframes.html` was present in this workspace, so the app uses the bundled neutral design system in `src/styles.css` (indigo accent, light surfaces, system font stack).
+The UI uses the shared design tokens in `design/tokens.css` (light and dark themes) plus app styles in `src/styles.css`.
 
 ## API
 
@@ -90,6 +90,7 @@ No `design/tokens.css` or `design/wireframes.html` was present in this workspace
 | `leave_room`   | client → server | none                                                                    |
 | `send_message` | client → server | `{ roomId?, dmKey?, senderId, senderName, body }`; ack `{ ok, message?, error? }` |
 | `new_message`  | server → client | `{ id, roomId, dmKey, senderId, senderName, body, createdAt }`          |
+| `message_activity` | server → client | `{ id, roomId, dmKey, senderId, senderName, createdAt }` (no body; drives unread badges) |
 | `presence`     | server → client | `{ channel, online }` (members currently in that room/DM)               |
 
 ## Project structure

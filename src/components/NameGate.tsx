@@ -1,8 +1,12 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import type { User } from "../../shared/types";
+import {
+  MAX_NAME_LENGTH,
+  MIN_NAME_LENGTH,
+  countCharacters,
+  type User,
+} from "../../shared/types";
 import { getMe } from "../api";
-import { MAX_NAME_LENGTH } from "../../shared/types";
 
 interface Props {
   initialName: string;
@@ -12,13 +16,23 @@ interface Props {
 export function NameGate({ initialName, onReady }: Props) {
   const [name, setName] = useState(initialName);
   const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const trimmed = name.trim();
+  const length = countCharacters(trimmed);
+  const valid = length >= MIN_NAME_LENGTH && length <= MAX_NAME_LENGTH;
+  const message =
+    error ??
+    (touched && !valid
+      ? `Tên cần từ ${MIN_NAME_LENGTH} đến ${MAX_NAME_LENGTH} ký tự.`
+      : null);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed) {
-      setError("Enter a display name to continue.");
+    setTouched(true);
+    if (!valid) {
+      setError(null);
       return;
     }
     setBusy(true);
@@ -27,7 +41,7 @@ export function NameGate({ initialName, onReady }: Props) {
       const user = await getMe(trimmed);
       onReady(user);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not sign in.");
+      setError(err instanceof Error ? err.message : "Không thể vào không gian làm việc.");
     } finally {
       setBusy(false);
     }
@@ -37,26 +51,34 @@ export function NameGate({ initialName, onReady }: Props) {
     <div className="gate">
       <div className="gate-card">
         <div className="brand-mark">P</div>
-        <h1>PTIT Messaging</h1>
+        <h1>Chào mừng đến PTIT Chat</h1>
         <p className="muted">
-          Pick a display name to join the internal chat. No account or password needed for this MVP.
+          Chọn tên hiển thị để bắt đầu. Không cần đăng nhập, dữ liệu chỉ lưu trên máy bạn.
         </p>
         <form onSubmit={submit} className="gate-form">
-          <label htmlFor="display-name">Display name</label>
+          <label htmlFor="display-name">Tên hiển thị</label>
           <input
             id="display-name"
             autoFocus
             value={name}
-            maxLength={MAX_NAME_LENGTH}
-            placeholder="e.g. Minh Tran"
+            placeholder="Ví dụ: Minh Trần"
+            aria-invalid={message ? true : undefined}
+            aria-describedby="name-error"
             onChange={(event) => setName(event.target.value)}
+            onBlur={() => setTouched(true)}
           />
-          {error ? <p className="form-error">{error}</p> : null}
-          <button type="submit" className="btn primary" disabled={busy}>
-            {busy ? "Joining…" : "Enter chat"}
+          {message ? (
+            <p id="name-error" className="form-error" role="alert">
+              {message}
+            </p>
+          ) : null}
+          <button type="submit" className="btn primary" disabled={busy || !valid}>
+            {busy ? "Đang vào…" : "Vào không gian làm việc"}
           </button>
         </form>
-        <p className="fineprint">Your name is stored in this browser only (localStorage).</p>
+        <p className="fineprint">
+          Tên chỉ được lưu trong trình duyệt này (localStorage).
+        </p>
       </div>
     </div>
   );

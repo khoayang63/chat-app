@@ -8,11 +8,17 @@ import {
   MAX_MESSAGE_LENGTH,
   MAX_NAME_LENGTH,
   MAX_ROOM_NAME_LENGTH,
+  MIN_NAME_LENGTH,
+  MIN_ROOM_NAME_LENGTH,
+  countCharacters,
   isDmKey,
+  isMentionFor,
+  normalizeMessageBody,
 } from "../shared/types";
 import type {
   JoinRoomPayload,
   Message,
+  MessageActivity,
   SendMessageAck,
   SendMessagePayload,
 } from "../shared/types";
@@ -48,7 +54,9 @@ app.use((req, res, next) => {
 function parseDisplayName(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const name = raw.trim();
-  if (!name || name.length > MAX_NAME_LENGTH) return null;
+  if (countCharacters(name) < MIN_NAME_LENGTH || countCharacters(name) > MAX_NAME_LENGTH) {
+    return null;
+  }
   if (/[\u0000-\u001f\u007f]/.test(name)) return null;
   return name;
 }
@@ -60,7 +68,8 @@ function parseRoomName(raw: unknown): string | null {
     .replace(/^#+/, "")
     .toLowerCase()
     .replace(/\s+/g, "-");
-  if (!name || name.length > MAX_ROOM_NAME_LENGTH) return null;
+  const length = countCharacters(name);
+  if (length < MIN_ROOM_NAME_LENGTH || length > MAX_ROOM_NAME_LENGTH) return null;
   if (!/^[a-z0-9][a-z0-9_-]*$/.test(name)) return null;
   return name;
 }
@@ -72,7 +81,9 @@ app.get("/api/health", (_req, res) => {
 app.get("/api/me", (req, res) => {
   const name = parseDisplayName(req.query.name);
   if (!name) {
-    res.status(400).json({ error: `Name is required and must be 1-${MAX_NAME_LENGTH} characters.` });
+    res.status(400).json({
+      error: `Tên cần từ ${MIN_NAME_LENGTH} đến ${MAX_NAME_LENGTH} ký tự.`,
+    });
     return;
   }
   res.json(upsertUser(name));
@@ -90,12 +101,12 @@ app.post("/api/rooms", (req, res) => {
   const name = parseRoomName(req.body?.name);
   if (!name) {
     res.status(400).json({
-      error: `Room name must be 1-${MAX_ROOM_NAME_LENGTH} letters, digits, spaces, "-" or "_".`,
+      error: `Tên phòng cần từ ${MIN_ROOM_NAME_LENGTH} đến ${MAX_ROOM_NAME_LENGTH} ký tự.`,
     });
     return;
   }
   if (findRoomByNameKey(name)) {
-    res.status(409).json({ error: `Room #${name} already exists.` });
+    res.status(409).json({ error: "Tên phòng đã tồn tại." });
     return;
   }
   res.status(201).json(createRoom(name));
@@ -194,7 +205,7 @@ io.on("connection", (socket) => {
         return;
       }
       const { roomId, dmKey, senderId, senderName } = payload;
-      const body = typeof payload.body === "string" ? payload.body.trim() : "";
+      const body = normalizeMessageBody(typeof payload.body === "string" ? payload.body : "");
       const target = { roomId: roomId ?? undefined, dmKey: dmKey ?? undefined };
       const channel = channelFor(target);
 
@@ -203,11 +214,14 @@ io.on("connection", (socket) => {
         return;
       }
       if (!body) {
-        ack?.({ ok: false, error: "Message cannot be empty." });
+        ack?.({ ok: false, error: "Tin nhắn không được để trống." });
         return;
       }
-      if (body.length > MAX_MESSAGE_LENGTH) {
-        ack?.({ ok: false, error: `Message must be at most ${MAX_MESSAGE_LENGTH} characters.` });
+      if (countCharacters(body) > MAX_MESSAGE_LENGTH) {
+        ack?.({
+          ok: false,
+          error: "Tin nhắn vượt quá 4.000 ký tự. Vui lòng rút ngắn rồi gửi lại.",
+        });
         return;
       }
       if (typeof senderId !== "string" || !userExists(senderId)) {
@@ -228,6 +242,18 @@ io.on("connection", (socket) => {
           body,
         });
         io.to(channel).emit("new_message", message);
+        const activity: MessageActivity = {
+          id: message.id,
+          roomId: message.roomId,
+          dmKey: message.dmKey,
+          senderId: message.senderId,
+          senderName: message.senderName,
+          createdAt: message.createdAt,
+          mentions: listUsers()
+            .filter((user) => isMentionFor(message.body, user.name))
+            .map((user) => user.id),
+        };
+        io.emit("message_activity", activity);
         ack?.({ ok: true, message });
       } catch (error) {
         console.error("[socket] failed to persist message:", error);
