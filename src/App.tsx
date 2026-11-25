@@ -104,6 +104,7 @@ export default function App() {
   const chatRef = useRef<HTMLElement>(null);
   const lastOpenedKeyRef = useRef<string | null>(null);
   const focusedConversationKeyRef = useRef<string | null>(null);
+  const skipDrawerRestoreRef = useRef(false);
 
   useEffect(() => {
     activeRef.current = active;
@@ -169,6 +170,7 @@ export default function App() {
     if (!drawerOpen || layout !== "tablet") return;
     const sidebar = sidebarRef.current;
     if (!sidebar) return;
+    skipDrawerRestoreRef.current = false;
 
     function focusables(): HTMLElement[] {
       return Array.from(
@@ -204,6 +206,10 @@ export default function App() {
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
+      if (skipDrawerRestoreRef.current) {
+        skipDrawerRestoreRef.current = false;
+        return;
+      }
       requestAnimationFrame(() => menuButtonRef.current?.focus());
     };
   }, [drawerOpen, layout]);
@@ -515,6 +521,7 @@ export default function App() {
     setMessages([]);
     setActive({ kind: "room", room });
     setDrawerOpen(false);
+    skipDrawerRestoreRef.current = true;
     setPane("thread");
     focusConversationHeading();
   }
@@ -524,6 +531,7 @@ export default function App() {
     setMessages([]);
     setActive({ kind: "room", room });
     setDrawerOpen(false);
+    skipDrawerRestoreRef.current = true;
     setPane("thread");
     focusConversationHeading();
   }
@@ -538,6 +546,7 @@ export default function App() {
     setMessages([]);
     setActive({ kind: "dm", peer });
     setDrawerOpen(false);
+    skipDrawerRestoreRef.current = true;
     setPane("thread");
     focusConversationHeading();
   }
